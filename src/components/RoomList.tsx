@@ -34,7 +34,9 @@ export default function RoomList({
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await fetch("http://localhost:8000/rooms");
+        const backendUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+        const response = await fetch(`${backendUrl}/rooms`);
         if (response.ok) {
           const data = await response.json();
           setRooms(data.rooms || []);
