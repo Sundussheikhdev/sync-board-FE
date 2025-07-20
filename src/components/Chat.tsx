@@ -37,7 +37,16 @@ export default function Chat({
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Only scroll to bottom if the user is already at the bottom or if it's a new message
+    const messagesContainer = messagesEndRef.current?.parentElement;
+    if (messagesContainer) {
+      const isAtBottom =
+        messagesContainer.scrollTop + messagesContainer.clientHeight >=
+        messagesContainer.scrollHeight - 10;
+      if (isAtBottom) {
+        scrollToBottom();
+      }
+    }
   }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {

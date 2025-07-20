@@ -28,7 +28,9 @@ export default function UserNameEntry({
   useEffect(() => {
     const fetchExistingUsers = async () => {
       try {
-        const response = await fetch("http://localhost:8000/users");
+        const backendUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+        const response = await fetch(`${backendUrl}/users`);
         if (response.ok) {
           const data = await response.json();
           setExistingUsers(data.users || []);
@@ -89,7 +91,9 @@ export default function UserNameEntry({
 
     try {
       // Double-check with server to ensure username is still available
-      const response = await fetch("http://localhost:8000/users/check", {
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const response = await fetch(`${backendUrl}/users/check`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

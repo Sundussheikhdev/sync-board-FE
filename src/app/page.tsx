@@ -68,7 +68,9 @@ export default function Home() {
       // Check if the stored username is still available
       const checkStoredUsername = async () => {
         try {
-          const response = await fetch("http://localhost:8000/users/check", {
+          const backendUrl =
+            process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+          const response = await fetch(`${backendUrl}/users/check`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -186,19 +188,18 @@ export default function Home() {
     async (newName: string) => {
       try {
         // Call backend to change username
-        const response = await fetch(
-          "http://localhost:8000/users/change-username",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              old_username: userName,
-              new_username: newName,
-            }),
-          }
-        );
+        const backendUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+        const response = await fetch(`${backendUrl}/users/change-username`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            old_username: userName,
+            new_username: newName,
+          }),
+        });
 
         if (response.ok) {
           setUserName(newName);
