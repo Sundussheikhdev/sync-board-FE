@@ -57,7 +57,7 @@ export default function Home() {
     ((strokeId: string) => void) | null
   >(null);
   const canvasStateCallbackRef = useRef<
-    ((drawings: DrawData[]) => void) | null
+    ((drawings: DrawStroke[]) => void) | null
   >(null);
   const clearCanvasCallbackRef = useRef<(() => void) | null>(null);
 
@@ -176,16 +176,6 @@ export default function Home() {
     setWsManager(null);
   }, [wsManager]);
 
-  // Handle rejoining the same room
-  const handleRejoinRoom = useCallback(() => {
-    if (roomName && userName) {
-      // For rejoining, we need to find the room by name first
-      // For now, just try to join with the roomName as the ID
-      // This will work if the roomName is actually the roomId
-      setAppState("in-room");
-    }
-  }, [roomName, userName]);
-
   // Handle changing username
   const handleChangeUsername = useCallback(() => {
     setAppState("change-username");
@@ -303,20 +293,6 @@ export default function Home() {
     [isConnected, wsManager, userName]
   );
 
-  const handleRemoteDraw = useCallback((drawData: any) => {
-    if (remoteDrawCallbackRef.current) {
-      remoteDrawCallbackRef.current(drawData);
-    }
-  }, []);
-
-  const handleCanvasState = useCallback((drawings: any[]) => {
-    // This will be passed to the Whiteboard component
-  }, []);
-
-  const handleClearCanvas = useCallback(() => {
-    // This will be passed to the Whiteboard component
-  }, []);
-
   const loadChatHistory = useCallback(async (roomId: string) => {
     try {
       const backendUrl =
@@ -331,36 +307,51 @@ export default function Home() {
         const messages = data.messages || [];
 
         // Convert the messages to the format expected by the frontend
-        const formattedMessages: ChatMessage[] = messages.map((msg: any) => {
-          // Infer file type from file extension if not provided
-          let fileType = msg.file_type || msg.fileType;
-          if (!fileType && msg.file_name) {
-            const fileName = msg.file_name.toLowerCase();
-            if (
-              fileName.endsWith(".jpg") ||
-              fileName.endsWith(".jpeg") ||
-              fileName.endsWith(".png") ||
-              fileName.endsWith(".gif") ||
-              fileName.endsWith(".webp") ||
-              fileName.endsWith(".bmp") ||
-              fileName.endsWith(".svg")
-            ) {
-              fileType = "image/" + fileName.split(".").pop();
-            } else if (fileName.endsWith(".pdf")) {
-              fileType = "application/pdf";
+        const formattedMessages: ChatMessage[] = messages.map(
+          (msg: {
+            user_id?: string;
+            userId?: string;
+            user_name?: string;
+            userName?: string;
+            message?: string;
+            timestamp?: string;
+            file_url?: string;
+            fileUrl?: string;
+            file_name?: string;
+            fileName?: string;
+            file_type?: string;
+            fileType?: string;
+          }) => {
+            // Infer file type from file extension if not provided
+            let fileType = msg.file_type || msg.fileType;
+            if (!fileType && msg.file_name) {
+              const fileName = msg.file_name.toLowerCase();
+              if (
+                fileName.endsWith(".jpg") ||
+                fileName.endsWith(".jpeg") ||
+                fileName.endsWith(".png") ||
+                fileName.endsWith(".gif") ||
+                fileName.endsWith(".webp") ||
+                fileName.endsWith(".bmp") ||
+                fileName.endsWith(".svg")
+              ) {
+                fileType = "image/" + fileName.split(".").pop();
+              } else if (fileName.endsWith(".pdf")) {
+                fileType = "application/pdf";
+              }
             }
-          }
 
-          return {
-            userId: msg.user_id || msg.userId || "unknown",
-            userName: msg.user_name || msg.userName || "Unknown User",
-            message: msg.message || "",
-            timestamp: msg.timestamp || new Date().toISOString(),
-            fileUrl: msg.file_url || msg.fileUrl,
-            fileName: msg.file_name || msg.fileName,
-            fileType: fileType,
-          };
-        });
+            return {
+              userId: msg.user_id || msg.userId || "unknown",
+              userName: msg.user_name || msg.userName || "Unknown User",
+              message: msg.message || "",
+              timestamp: msg.timestamp || new Date().toISOString(),
+              fileUrl: msg.file_url || msg.fileUrl,
+              fileName: msg.file_name || msg.fileName,
+              fileType: fileType,
+            };
+          }
+        );
 
         // Add a debug message to the chat showing how many messages were loaded
         if (formattedMessages.length > 0) {
@@ -376,7 +367,9 @@ export default function Home() {
         }
       } else {
       }
-    } catch (error) {}
+    } catch {
+      // Handle error silently
+    }
   }, []);
 
   useEffect(() => {
@@ -465,7 +458,7 @@ export default function Home() {
       setOnlineUsers((prev) => [...prev, { id: userId, name: userName }]);
     });
 
-    manager.onUserLeft((userId: string, userName: string) => {
+    manager.onUserLeft((userId: string) => {
       setOnlineUsers((prev) => prev.filter((user) => user.id !== userId));
     });
 
@@ -479,18 +472,20 @@ export default function Home() {
       }
     );
 
-    manager.onRoomInfo((roomInfo: any) => {
-      // Update online users from room info
-      if (roomInfo.users && Array.isArray(roomInfo.users)) {
-        const users = roomInfo.users.map((user: any) => ({
-          id: user.id,
-          name: user.name || `User ${user.id}`,
-        }));
-        setOnlineUsers(users);
+    manager.onRoomInfo(
+      (roomInfo: { users?: Array<{ id: string; name?: string }> }) => {
+        // Update online users from room info
+        if (roomInfo.users && Array.isArray(roomInfo.users)) {
+          const users = roomInfo.users.map((user) => ({
+            id: user.id,
+            name: user.name || `User ${user.id}`,
+          }));
+          setOnlineUsers(users);
+        }
       }
-    });
+    );
 
-    manager.onCanvasState((drawings: any[]) => {
+    manager.onCanvasState((drawings: DrawStroke[]) => {
       if (canvasStateCallbackRef.current) {
         canvasStateCallbackRef.current(drawings);
       }
@@ -515,7 +510,7 @@ export default function Home() {
       .then(() => {
         setIsConnected(true);
       })
-      .catch((error) => {
+      .catch(() => {
         setIsConnected(false);
       });
 
@@ -536,7 +531,6 @@ export default function Home() {
           onJoinRoom={handleJoinRoom}
           onCreateRoom={handleCreateRoom}
           onChangeUsername={handleChangeUsername}
-          onLeave={handleLeaveRoom}
           onLogout={handleLogout}
           lastRoomName={roomName}
         />
@@ -587,11 +581,6 @@ export default function Home() {
             {/* Whiteboard */}
             <div className="flex-1 bg-white">
               <Whiteboard
-                onDraw={(data) => {
-                  if (wsManager) {
-                    wsManager.sendDraw(data);
-                  }
-                }}
                 onStrokeStart={(stroke) => {
                   if (wsManager) {
                     wsManager.sendStrokeStart(stroke);
@@ -642,7 +631,6 @@ export default function Home() {
                 messages={messages}
                 onSendMessage={handleSendMessage}
                 onFileUpload={handleFileUpload}
-                onLeaveRoom={handleLeaveRoom}
                 isConnected={isConnected}
                 onlineUsers={onlineUsers.map((user) => user.name)}
                 currentUserName={userName}

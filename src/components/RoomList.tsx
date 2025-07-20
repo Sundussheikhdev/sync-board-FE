@@ -14,7 +14,6 @@ interface RoomListProps {
   onJoinRoom: (roomId: string, roomName: string) => void;
   onCreateRoom: () => void;
   onChangeUsername: () => void;
-  onLeave: () => void;
   onLogout: () => void;
   lastRoomName?: string; // Add this to show rejoin option
 }
@@ -24,7 +23,6 @@ export default function RoomList({
   onJoinRoom,
   onCreateRoom,
   onChangeUsername,
-  onLeave,
   onLogout,
   lastRoomName,
 }: RoomListProps) {
@@ -43,7 +41,7 @@ export default function RoomList({
         } else {
           setError("Failed to fetch rooms");
         }
-      } catch (err) {
+      } catch {
         setError("Failed to connect to server");
       } finally {
         setLoading(false);

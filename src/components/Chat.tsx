@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Upload, FileText, Image, X, Download } from "lucide-react";
+import { Send, Upload, FileText, Image, Download } from "lucide-react";
 import { ChatMessage } from "@/utils/websocket";
 import FilePreviewModal from "./FilePreviewModal";
 
@@ -9,7 +9,6 @@ interface ChatProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   onFileUpload: (file: File) => void;
-  onLeaveRoom: () => void;
   isConnected: boolean;
   onlineUsers: string[];
   currentUserName: string;
@@ -19,7 +18,6 @@ export default function Chat({
   messages,
   onSendMessage,
   onFileUpload,
-  onLeaveRoom,
   isConnected,
   onlineUsers,
   currentUserName,

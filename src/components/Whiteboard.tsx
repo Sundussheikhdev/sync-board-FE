@@ -6,7 +6,6 @@ import { Eraser, Palette, Trash2 } from "lucide-react";
 import { DrawData, DrawStroke, DrawPoint } from "@/utils/websocket";
 
 interface WhiteboardProps {
-  onDraw: (data: DrawData) => void;
   onStrokeStart: (stroke: DrawStroke) => void;
   onStrokePoint: (strokeId: string, point: DrawPoint) => void;
   onStrokeEnd: (strokeId: string) => void;
@@ -17,7 +16,7 @@ interface WhiteboardProps {
   ) => void;
   onRemoteStrokeEnd: (callback: (strokeId: string) => void) => void;
   onClearCanvas: () => void;
-  onCanvasState: (callback: (drawings: DrawData[]) => void) => void;
+  onCanvasState: (callback: (drawings: DrawStroke[]) => void) => void;
   onClearCanvasRemote: (callback: () => void) => void;
   isConnected: boolean;
   currentUserId: string;
@@ -25,7 +24,6 @@ interface WhiteboardProps {
 }
 
 export default function Whiteboard({
-  onDraw,
   onStrokeStart,
   onStrokePoint,
   onStrokeEnd,
@@ -302,7 +300,7 @@ export default function Whiteboard({
   }, [getContext, isConnected, onClearCanvas]);
 
   const handleCanvasState = useCallback(
-    (drawings: any[]) => {
+    (drawings: DrawStroke[]) => {
       const ctx = getContext();
       if (!ctx) return;
 

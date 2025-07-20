@@ -103,7 +103,7 @@ export default function CreateRoom({
         const errorData = await response.json();
         setError(errorData.detail || "Failed to create room");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to connect to server");
     } finally {
       setIsCreating(false);

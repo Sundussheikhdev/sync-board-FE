@@ -110,7 +110,7 @@ export default function UserNameEntry({
       } else {
         setError("Failed to validate username");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to connect to server");
     } finally {
       setIsChecking(false);

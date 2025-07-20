@@ -49,6 +49,7 @@ export interface WebSocketMessage {
     | "canvas_state"
     | "clear_canvas"
     | "heartbeat_response";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   timestamp: string;
 }
@@ -66,8 +67,10 @@ export class WebSocketManager {
     oldName: string,
     newName: string
   ) => void;
-  private onRoomInfoCallback?: (roomInfo: any) => void;
-  private onCanvasStateCallback?: (drawings: DrawData[]) => void;
+  private onRoomInfoCallback?: (roomInfo: {
+    users?: Array<{ id: string; name?: string }>;
+  }) => void;
+  private onCanvasStateCallback?: (drawings: DrawStroke[]) => void;
   private onClearCanvasCallback?: () => void;
   private onStrokeStartCallback?: (stroke: DrawStroke) => void;
   private onStrokePointCallback?: (strokeId: string, point: DrawPoint) => void;
@@ -124,7 +127,7 @@ export class WebSocketManager {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
             this.handleMessage(message);
-          } catch (error) {
+          } catch {
             // Silently handle parsing errors
           }
         };
@@ -150,11 +153,11 @@ export class WebSocketManager {
           }
         };
 
-        this.ws.onerror = (error) => {
-          reject(error);
+        this.ws.onerror = () => {
+          reject(new Error("WebSocket connection failed"));
         };
-      } catch (error) {
-        reject(error);
+      } catch {
+        reject(new Error("Failed to create WebSocket connection"));
       }
     });
   }
@@ -293,7 +296,7 @@ export class WebSocketManager {
     this.sendMessage("get_room_info", {});
   }
 
-  private sendMessage(type: string, data: any) {
+  private sendMessage(type: string, data: unknown) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const message = {
         type,
@@ -327,11 +330,15 @@ export class WebSocketManager {
     this.onNameChangeCallback = callback;
   }
 
-  onRoomInfo(callback: (roomInfo: any) => void) {
+  onRoomInfo(
+    callback: (roomInfo: {
+      users?: Array<{ id: string; name?: string }>;
+    }) => void
+  ) {
     this.onRoomInfoCallback = callback;
   }
 
-  onCanvasState(callback: (drawings: DrawData[]) => void) {
+  onCanvasState(callback: (drawings: DrawStroke[]) => void) {
     this.onCanvasStateCallback = callback;
   }
 
